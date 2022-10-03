@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/MeowPup/tinyapp/issues"
   },
-  "homepage": "https://github.com/MeowPup/tinyapp#readme"
+  "homepage": "https://github.com/MeowPup/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
 }
