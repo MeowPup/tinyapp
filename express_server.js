@@ -10,6 +10,16 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
+});
+
+app.get("/urls/:id", (req, res) => {
+  const templateVars = { id: req.params.id, longURL: 'http://www.lighthouselabs.ca' };
+  res.render("urls_show", templateVars);
+});
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
