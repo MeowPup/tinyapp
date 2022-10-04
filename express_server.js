@@ -57,6 +57,14 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+// adding POST to delete selected URL
+app.post("/urls/:id/delete", (req, res) => {
+  for (let id in urlDatabase) {
+    delete urlDatabase[id];
+  }
+  res.redirect("/urls");
+});
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
