@@ -1,16 +1,21 @@
 const express = require("express");
 const app = express();
+const morgan = require("morgan");
 const PORT = 8080;
 
-// set the view engine to ejs
+
 app.set('view engine', 'ejs');
 
+app.use(morgan('dev'));
+
+// database to hold shortURL and longURL
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-function generateRandomString(length) {
+// generateRandomString function goes here for now
+const generateRandomString = function(length) {
   let result = '';
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let charactersLength = characters.length;
@@ -22,35 +27,38 @@ function generateRandomString(length) {
 
 app.use(express.urlencoded({ extended: true }));
 
+// main webpage with database listed
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
+// page for creating a new URL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+// generating random string for URL input
+app.post("/urls", (req, res) => {
+  const shortURL = generateRandomString(6);
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
+// page to display the inputed URL and RNG shortURL
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: 'http://www.lighthouselabs.ca' };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send(generateRandomString(6)); // Respond with 'Ok' (we will replace this)
-});
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
+// redirect shortURL ----> longURL
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
 });
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.listen(PORT, () => {
