@@ -1,12 +1,15 @@
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
+const cookieParser = require('cookie-parser');
 const PORT = 8080;
 
 
 app.set('view engine', 'ejs');
 
 app.use(morgan('dev'));
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
 
 // database to hold shortURL and longURL
 const urlDatabase = {
@@ -25,11 +28,9 @@ const generateRandomString = function(length) {
   return result;
 };
 
-app.use(express.urlencoded({ extended: true }));
-
 // main webpage with database listed
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"]};
   res.render("urls_index", templateVars);
 });
 
@@ -66,6 +67,12 @@ app.post("/urls/:id/delete", (req, res) => {
 // adding edit route
 app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL;
+  res.redirect("/urls");
+});
+
+// adding username when logging in
+app.post("/login", (req, res) => {
+  res.cookie("username", req.body.username);
   res.redirect("/urls");
 });
 
