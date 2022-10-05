@@ -76,6 +76,12 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+// directing user back to urls with no username when clicking logout
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls");
+});
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
