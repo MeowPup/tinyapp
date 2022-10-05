@@ -17,6 +17,32 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+// database to hold usersID
+const users = {
+  userRandomID: {
+    id: "RtU6r2",
+    email: "test1@test.com",
+    password: "test1"
+  },
+  user2RandomID: {
+    id: "Er54Tg",
+    email: "test2@test.com",
+    password: "test2"
+  },
+};
+
+// findUserByEmail funtion goes here for now
+const findUserByEmail = (email) => {
+  for (const userID in users) {
+    const userFromDb = users[userID];
+
+    if (userFromDb.email === email) {
+      return userFromDb;
+    }
+  }
+  return null;
+};
+
 // generateRandomString function goes here for now
 const generateRandomString = function(length) {
   let result = '';
@@ -30,13 +56,14 @@ const generateRandomString = function(length) {
 
 // main webpage with database listed
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"]};
+  const templateVars = { urls: urlDatabase, userId: req.cookies["userId"]};
   res.render("urls_index", templateVars);
 });
 
 // page for creating a new URL
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {userId: req.cookies["userId"]};
+  res.render("urls_new", templateVars);
 });
 
 // generating random string for URL input
@@ -48,7 +75,7 @@ app.post("/urls", (req, res) => {
 
 // page to display the inputed URL and RNG shortURL
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], userId: req.cookies["userId"]};
   res.render("urls_show", templateVars);
 });
 
@@ -56,11 +83,6 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
-});
-
-// registration page
-app.get("/register", (req, res) => {
-  res.render("/register");
 });
 
 // adding POST to delete selected URL
@@ -75,15 +97,73 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 
+// login page
+app.get("/login", (req, res) => {
+  const templateVars = {userId: req.cookies["userId"]};
+  res.render("urls_login", templateVars);
+});
+
 // adding username when logging in
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(404).send('Please include email AND password');
+  }
+
+  const user = findUserByEmail(email);
+
+  if (!user) {
+    return res.status(400).send('No user with that email found');
+  }
+
+  res.cookie('userId', user.email);
+
   res.redirect("/urls");
+});
+
+
+// registration page
+app.get("/register", (req, res) => {
+  const templateVars = {userId: req.cookies["userId"]};
+  res.render("urls_register", templateVars);
+});
+
+// post registration page
+app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(400).send("Please include email AND password");
+  }
+
+  const userFromDb = findUserByEmail(email);
+
+  if (userFromDb) {
+    return res.status(400).send("email is already in use");
+  }
+
+  const id = generateRandomString(6);
+
+  const user = {
+    id,
+    email,
+    password
+  };
+
+  users[id] = user;
+  console.log(users);
+
+  res.cookie('user_Id', user.id);
+
+  res.redirect('/urls');
 });
 
 // directing user back to urls with no username when clicking logout
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("userId");
   res.redirect("/urls");
 });
 
