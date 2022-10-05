@@ -58,6 +58,11 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+// registration page
+app.get("/register", (req, res) => {
+  res.render("/register");
+});
+
 // adding POST to delete selected URL
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
