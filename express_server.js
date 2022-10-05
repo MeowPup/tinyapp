@@ -59,9 +59,13 @@ app.get("/u/:id", (req, res) => {
 
 // adding POST to delete selected URL
 app.post("/urls/:id/delete", (req, res) => {
-  for (let id in urlDatabase) {
-    delete urlDatabase[id];
-  }
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
+});
+
+// adding edit route
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL;
   res.redirect("/urls");
 });
 
