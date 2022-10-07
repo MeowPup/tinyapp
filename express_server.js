@@ -9,8 +9,7 @@ app.use(morgan('dev'));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
-// const bcrypt = require("bcryptjs");
-// const hashedPassword = bcrypt.hashSync(password, 10);
+const bcrypt = require("bcryptjs");
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -144,18 +143,21 @@ app.post("/register", (req, res) => {
     return res.status(400).send("email is already in use");
   }
 
+  // creating a new user
   const id = generateRandomString(6);
+
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(password, salt);
 
   const user = {
     id,
     email,
-    password
+    password : hash
   };
 
   users[id] = user;
-  console.log(users);
 
-  res.cookie('user_Id', user.id);
+  res.cookie('userId', user.id);
 
   res.redirect('/urls');
 });
@@ -183,6 +185,13 @@ app.post("/login", (req, res) => {
 
   if (!user) {
     return res.status(400).send('No user with that email found');
+  }
+
+  // check if password is correct
+  const result = bcrypt.compareSync(password, user.password);
+
+  if (!result) {
+    return res.status(400).send("wrong password");
   }
 
   res.cookie('userId', user.email);
