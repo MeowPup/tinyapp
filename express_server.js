@@ -82,11 +82,17 @@ app.post("/urls", (req, res) => {
 
 // page to display the inputed URL and RNG shortURL
 app.get("/urls/:id", (req, res) => {
+  if (!urlDatabase[req.params.id]) {
+    res.status(404).send("This URL does not exist");
+  }
   if (!req.cookies.userId) {
     res.redirect("/urls");
-  } else {
-    const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, userId: req.cookies["userId"]};
+  }
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, userId: req.cookies["userId"]};
+  if (req.cookies["userId"] === urlDatabase[templateVars.id].userId) {
     res.render("urls_show", templateVars);
+  } else {
+    res.status(401).send("You are not authorized to access this URL");
   }
 });
 
@@ -98,8 +104,13 @@ app.get("/u/:id", (req, res) => {
 
 // adding POST to delete selected URL
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect("/urls");
+  const shortURL = req.params.id;
+  if (req.cookies["userId"] === urlDatabase[shortURL].userId) {
+    delete urlDatabase[req.params.id];
+    res.redirect("/urls");
+  } else {
+    res.status(401).send("You are not authorized to access this URL");
+  }
 });
 
 // adding edit route
