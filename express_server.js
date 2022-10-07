@@ -6,12 +6,14 @@ const PORT = 8080;
 const morgan = require("morgan");
 app.use(morgan('dev'));
 
-const cookieParser = require('cookie-parser');
-app.use(cookieParser());
+const cookieSession = require('cookie-session');
+app.use(cookieSession({
+  name: 'session',
+  keys: ['lsbosufa']
+}));
 
 const bcrypt = require("bcryptjs");
 
-app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 
@@ -48,32 +50,29 @@ const users = {
 
 // main webpage with database listed
 app.get("/urls", (req, res) => {
-  if (!req.cookies.userId) {
-    return res.status(401).send("Please log in to continue");
-  }
-  const templateVars = { urls: urlsForUser(req.cookies.userId, urlDatabase), userId: req.cookies["userId"]};
+  const templateVars = { urls: urlsForUser(req.session.userId, urlDatabase), userId: req.session.userId};
   res.render("urls_index", templateVars);
 });
 
 // page for creating a new URL
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies.userId) {
+  if (!req.session.userId) {
     return res.status(401).send('Please log in or register before creating a new URL');
   } else {
-    const templateVars = {userId: req.cookies["userId"]};
+    const templateVars = {userId: req.session.userId};
     res.render("urls_new", templateVars);
   }
 });
 
 // generating random string for URL input
 app.post("/urls", (req, res) => {
-  if (!req.cookies.userId) {
+  if (!req.session.userId) {
     res.redirect("/urls");
   } else {
     const shortURL = generateRandomString(6);
     urlDatabase[shortURL] = {
       longURL: req.body.longURL,
-      userId: req.cookies["userId"]
+      userId: req.session.userId
     };
     res.redirect(`/urls/${shortURL}`);
   }
@@ -84,11 +83,11 @@ app.get("/urls/:id", (req, res) => {
   if (!urlDatabase[req.params.id]) {
     res.status(404).send("This URL does not exist");
   }
-  if (!req.cookies.userId) {
+  if (!req.session.userId) {
     res.redirect("/urls");
   }
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, userId: req.cookies["userId"]};
-  if (req.cookies["userId"] === urlDatabase[templateVars.id].userId) {
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, userId: req.session.userId};
+  if (req.session.userId === urlDatabase[templateVars.id].userId) {
     res.render("urls_show", templateVars);
   } else {
     res.status(401).send("You are not authorized to access this URL");
@@ -104,7 +103,7 @@ app.get("/u/:id", (req, res) => {
 // adding POST to delete selected URL
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
-  if (req.cookies["userId"] === urlDatabase[shortURL].userId) {
+  if (req.session.userId === urlDatabase[shortURL].userId) {
     delete urlDatabase[req.params.id];
     res.redirect("/urls");
   } else {
@@ -120,10 +119,10 @@ app.post("/urls/:id", (req, res) => {
 
 // registration page
 app.get("/register", (req, res) => {
-  if (req.cookies.userId) {
+  if (req.session.userId) {
     res.redirect("/urls");
   } else {
-    const templateVars = {userId: req.cookies["userId"]};
+    const templateVars = {userId: req.session.userId};
     res.render("urls_register", templateVars);
   }
 });
@@ -157,17 +156,17 @@ app.post("/register", (req, res) => {
 
   users[id] = user;
 
-  res.cookie('userId', user.id);
+  req.session.userId = user;
 
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 // login page
 app.get("/login", (req, res) => {
-  if (req.cookies.userId) {
+  if (req.session.userId) {
     res.redirect("/urls");
   } else {
-    const templateVars = {userId: req.cookies["userId"]};
+    const templateVars = {userId: req.session.userId};
     res.render("urls_login", templateVars);
   }
 });
@@ -194,14 +193,14 @@ app.post("/login", (req, res) => {
     return res.status(400).send("wrong password");
   }
 
-  res.cookie('userId', user.email);
+  req.session.userId = user.id;
 
   res.redirect("/urls");
 });
 
 // directing user back to urls with no username when clicking logout
 app.post("/logout", (req, res) => {
-  res.clearCookie("userId");
+  req.session = null;
   res.redirect("/urls");
 });
 
