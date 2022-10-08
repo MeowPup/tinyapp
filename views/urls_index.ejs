@@ -16,6 +16,7 @@
     />
     <title>TinyApp</title>
   </head>
+  <% if (user) { %>
   <body>
     <%- include ('partials/_header') %>
     <main style="margin: 1em;">
@@ -40,6 +41,7 @@
           <% } %>
         </tbody>
       </table>
+      <% } %>
     </main>
     <!-- Bootstrap JS -->
     <script
@@ -59,4 +61,3 @@
     ></script>
   </body>
 </html>
-
