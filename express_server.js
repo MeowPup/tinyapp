@@ -15,10 +15,10 @@ app.use(cookieSession({
 
 app.set('view engine', 'ejs');
 
-// helper functions
+// Helper Functions
 const { findUserByEmail, generateRandomString, urlsForUser } = require('./helpers');
 
-// databases
+// Databases
 const urlDatabase = {
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
@@ -41,7 +41,7 @@ const users = {
 
 // ---- TINY APP ----
 
-// redirecting if user is logged in or needs to login
+// Home page - redirects to login if not logged in
 app.get("/", (req, res) => {
   if (!req.session.userID) {
     res.redirect("/login");
@@ -50,7 +50,7 @@ app.get("/", (req, res) => {
   }
 });
 
-// main webpage with database listed
+// Home page - displays list of current user URLS
 app.get("/urls", (req, res) => {
   const userID = req.session.userID;
   const user = users[userID];
@@ -74,7 +74,7 @@ app.get("/urls", (req, res) => {
   return res.render("urls_index", templateVars);
 });
 
-// page for creating a new URL
+// Create new URL
 app.get("/urls/new", (req, res) => {
   const userID = req.session.userID;
   const user = users[userID];
@@ -91,7 +91,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-// page to display the inputed URL and RNG shortURL
+// Displays longURL and RNG shortURL
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
@@ -137,7 +137,7 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// redirect shortURL ----> longURL
+// Redirect shortURL ----> longURL
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
@@ -153,7 +153,7 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-// generating random string for URL input
+// RNG for shortURL
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(6);
   const user = users[req.session.userID];
@@ -174,7 +174,7 @@ app.post("/urls", (req, res) => {
   }
 });
 
-// adding edit route
+// Page to submit edits for URL
 app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL].longURL;
@@ -206,7 +206,7 @@ app.post("/urls/:id", (req, res) => {
   }
 });
 
-// adding POST to delete selected URL
+// Delete a URL
 app.post("/urls/:id/delete", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
@@ -237,7 +237,7 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-// login page
+// Login page
 app.get("/login", (req, res) => {
   const user = users[req.session.userID];
   const templateVars = {
@@ -247,7 +247,7 @@ app.get("/login", (req, res) => {
   res.render("urls_login", templateVars);
 });
 
-// registration page
+// Registration page
 app.get("/register", (req, res) => {
   const user = users[req.session.userID];
   const templateVars = {
@@ -257,7 +257,7 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
-// adding username when logging in
+// Adds username after login 
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -287,7 +287,7 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
-// post registration page
+// Registers new user
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -295,9 +295,7 @@ app.post("/register", (req, res) => {
 
   if (!email || !password) {
     return res.status(404).send("Please include email AND password");
-  }
-
-  if (user) {
+  } else if (user) {
     const templateVars = {
       errorType: "401 Error",
       errorDetails: "Unauthorized",
@@ -306,10 +304,8 @@ app.post("/register", (req, res) => {
     };
     res.status(401).render("urls_error", templateVars);
   } else {
-
     // creating a new user
     const userID = generateRandomString(6);
-
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(password, salt);
 
@@ -318,14 +314,12 @@ app.post("/register", (req, res) => {
       email,
       password: hash
     };
-
     req.session.userID = userID;
-
     res.redirect('/urls');
   }
 });
 
-// directing user back to urls with no username when clicking logout
+// Logout button
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/urls");
