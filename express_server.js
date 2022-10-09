@@ -180,13 +180,10 @@ app.post("/urls/:id", (req, res) => {
   const longURL = urlDatabase[shortURL].longURL;
   const user = users[req.session.userID];
   const id = req.session.userID;
-  const newURL = req.body.newURL;
+  let newURL = req.body.newURL;
 
   if (req.session.userID === urlDatabase[shortURL].userID) {
-    urlDatabase[shortURL] = {
-      longURL,
-      userID: req.session.userID,
-    };
+    urlDatabase[shortURL].longURL = newURL;
     res.redirect(`/urls`);
   } else if (!user) {
     const templateVars = {
