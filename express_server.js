@@ -57,7 +57,13 @@ app.get("/urls", (req, res) => {
   const userUrls = urlsForUser(req.session.userID, urlDatabase);
 
   if (!user) {
-    res.redirect("/register");
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Unauthorized",
+      error: "Please login or register",
+      user: req.session.userID
+    };
+    res.status(401).render("urls_error", templateVars);
   }
 
   const templateVars = {
@@ -74,7 +80,7 @@ app.get("/urls/new", (req, res) => {
   const user = users[userID];
 
   if (!user) {
-    res.redirect("/register");
+    res.redirect("/login");
   }
 
   const templateVars = {
@@ -86,23 +92,48 @@ app.get("/urls/new", (req, res) => {
 });
 
 // page to display the inputed URL and RNG shortURL
-app.get("/urls/:id", (req, res, error) => {
+app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
   const user = users[req.session.userID];
   const id = req.session.userID;
 
   if (!user) {
-    res.redirect("/login");
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Unauthorized",
+      error: "Please login or register",
+      user: req.session.userID
+    };
+    res.status(401).render("urls_error", templateVars);
   }
+
   if (longURL.userID !== id) {
-    return res.status(400).send(error.message);
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Unauthorized",
+      error: "You do not own that URL",
+      user: req.session.userID
+    };
+    res.status(401).render("urls_error", templateVars);
   }
+
+  if (!longURL.userID) {
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Not Found",
+      error: "That URL for the TinyURL does not exist",
+      user: req.session.userID
+    };
+    res.status(404).render("urls_error", templateVars);
+  }
+
   const templateVars = {
     shortURL,
     longURL,
     user,
   };
+
   res.render("urls_show", templateVars);
 });
 
@@ -110,38 +141,72 @@ app.get("/urls/:id", (req, res, error) => {
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
+
+  if (!longURL) {
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Not Found",
+      error: "That URL for the TinyURL does not exist",
+      user: req.session.userID
+    };
+    res.status(404).render("urls_error", templateVars);
+  }
 });
 
 // generating random string for URL input
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(6);
+  const user = users[req.session.userID];
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    user: req.session.userID
+    userID: req.session.userID
   };
   res.redirect(`/urls/${shortURL}`);
+
+  if (!user) {
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Unauthorized",
+      error: "Please login or register",
+      user: req.session.userID
+    };
+    res.status(401).render("urls_error", templateVars);
+  }
 });
 
 // adding edit route
-app.post("/urls/:id", (req, res, error) => {
+app.post("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   const user = users[req.session.userID];
   const id = req.session.userID;
+  const newURL = req.body.newURL;
 
-  if (!user) {
-    res.redirect("/login");
+  if (req.session.userID === urlDatabase[shortURL].userID) {
+    urlDatabase[shortURL] = {
+      longURL,
+      userID: req.session.userID,
+    };
+    res.redirect(`/urls`);
+  } else if (!user) {
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Unauthorized",
+      error: "Please login or register",
+      user: req.session.userID
+    };
+    res.status(401).render("urls_error", templateVars);
+  } else {
+    if (longURL.userID !== id) {
+      const templateVars = {
+        errorType: "401 Error",
+        errorDetails: "Unauthorized",
+        error: "You do not own that URL",
+        user: req.session.userID
+      };
+      res.status(401).render("urls_error", templateVars);
+    }
   }
-  if (longURL.userID !== id) {
-    console.log(error);
-    return res.status(400).send("this is an error about the URL1");
-  }
-
-  urlDatabase[shortURL] = {
-    longURL,
-    userID: req.session.userID,
-  };
-  res.redirect("/urls");
 });
 
 // adding POST to delete selected URL
@@ -152,11 +217,23 @@ app.post("/urls/:id/delete", (req, res) => {
   const id = req.session.userID;
 
   if (!user) {
-    res.redirect('/login');
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Unauthorized",
+      error: "Please login or register",
+      user: req.session.userID
+    };
+    res.status(401).render("urls_error", templateVars);
   }
 
   if (longURL.userID !== id) {
-    return res.status(401).send('You do not own this URL');
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Unauthorized",
+      error: "You do not own that URL",
+      user: req.session.userID
+    };
+    res.status(401).render("urls_error", templateVars);
   }
 
   delete urlDatabase[shortURL];
@@ -190,7 +267,13 @@ app.post("/login", (req, res) => {
   const user = findUserByEmail(email, users);
   
   if (!user) {
-    return res.status(400).send('No user with that email found');
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Unauthorized",
+      error: "Please login or register",
+      user: req.session.userID
+    };
+    res.status(401).render("urls_error", templateVars);
   }
 
   const result = bcrypt.compareSync(password, user.password);
@@ -200,7 +283,7 @@ app.post("/login", (req, res) => {
   }
 
   if (!result) {
-    return res.status(400).send("wrong password");
+    return res.status(401).send("wrong password");
   }
 
   req.session.userID = user.id;
@@ -214,11 +297,17 @@ app.post("/register", (req, res) => {
   const user = findUserByEmail(email, users);
 
   if (!email || !password) {
-    return res.status(400).send("Please include email AND password");
+    return res.status(404).send("Please include email AND password");
   }
 
   if (user) {
-    return res.status(400).send("email is already in use");
+    const templateVars = {
+      errorType: "401 Error",
+      errorDetails: "Unauthorized",
+      error: "Please login or register",
+      user: req.session.userID
+    };
+    res.status(401).render("urls_error", templateVars);
   } else {
 
     // creating a new user

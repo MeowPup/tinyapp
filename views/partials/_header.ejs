@@ -19,17 +19,21 @@
       </div>
     </div>
     <% if (user) { %>
-    <form style="float: right;" action="/logout" method="POST">
+    <form class="form-inline" style="float: right;" action="/logout" method="POST">
+      <div style="margin-right: 10px; margin-top: 15px;">
       <p> Logged in as: <%= user.email %></p>
-    <button type="submit">Logout</button>
+    </div>
+      <button class="btn btn-primary" type="submit">Logout</button>
     </form>
     <% } else { %>
-      <form style="float: right;" action="/register" method="GET">
-        <button type="submit">Register</button>
+      <form style="float: right;" action="/login" method="GET">
+        <button type="submit" class="btn btn-primary" style="
+    margin-right: 10px;
+">Login</button>
     </form>
-    <form style="float: right;" action="/login" method="GET">
-      <button type="submit">Login</button>
-  </form>
+      <form style="float: right;" action="/register" method="GET">
+        <button type="submit" class="btn btn-primary">Register</button>
+    </form>
   <% } %>
   </nav>
 </header>

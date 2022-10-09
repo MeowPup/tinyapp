@@ -14,6 +14,10 @@
       integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
       crossorigin="anonymous"
     />
+    <link
+      rel="stylesheet"
+      href="/style.css"
+    />
 
     <title>Login</title>
   </head>
@@ -23,14 +27,21 @@
       <%- include('partials/_header') %>
     </header>
     <main style="margin: 1em"></main>
-    <h3>Login</h3>
+    <div class="container loginFormContainer">
+  <h3>Login</h3>
   <form action="/login" method="POST">
-    <label for="email">Email address:</label>
-    <input type="email" name="email" placeholder="Enter your email" required>
-    <label for="password">Password:</label>
-    <input type="password" name="password" placeholder="Enter your password">
-    <button type="submit">Login</button>
+    <div class="form-group">
+      <label for="email">Email address</label>
+      <input name="email" id="email" type="email" class="form-control" aria-describedby="emailHelp" placeholder="email@example.com">
+      <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input name="password" id="password" type="password" class="form-control" placeholder="Password">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
   </form>
+</div>
 </main>
     <!-- Bootstrap JS -->
     <script
